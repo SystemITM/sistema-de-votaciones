@@ -1,0 +1,30 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-voting}
+      POSTGRES_USER: ${POSTGRES_USER:-voting}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-voting}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-voting} -d ${POSTGRES_DB:-voting}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+  web:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-voting}
+      POSTGRES_USER: ${POSTGRES_USER:-voting}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-voting}
+      DB_HOST: db
+      DEBUG: ${DEBUG:-False}
+      SECRET_KEY: ${SECRET_KEY:-dev-only-change-me}
+    depends_on:
+      db:
+        condition: service_healthy
+volumes:
+  postgres_data:
